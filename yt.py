@@ -1,4 +1,6 @@
 import subprocess
+import os
+import shutil
 
 # ANSI styles for color and bold text
 styles = {
@@ -19,6 +21,18 @@ colors = {
 def sanitize_filename(name):
     name = name.strip().replace(" ", "_")
     return name if name.endswith(".mp3") else f"{name}.mp3"
+
+def move_to_downloads(file_name):
+    downloads_dir = os.path.expanduser("~/storage/downloads")
+    if not os.path.exists(downloads_dir):
+        print(f"{colors['yellow']}Requesting storage permission...{colors['reset']}")
+        os.system("termux-setup-storage")
+
+    try:
+        shutil.move(file_name, os.path.join(downloads_dir, file_name))
+        print(f"{colors['green']}Moved to Downloads: {downloads_dir}/{file_name}{colors['reset']}")
+    except Exception as e:
+        print(f"{colors['red']}Error moving file: {e}{colors['reset']}")
 
 def download_video():
     url = input(f"{colors['cyan']}Enter YouTube video URL: {colors['reset']}").strip()
@@ -79,6 +93,12 @@ def download_audio():
         print(f"{styles['bold']}{colors['yellow']}\nDownloading and converting to MP3...{styles['reset']}")
         subprocess.run(command, check=True)
         print(f"{styles['bold']}{colors['green']}\nSuccess! Audio saved as: {output_file}{styles['reset']}")
+        
+        # Ask user if they want to move it
+        move = input(f"{colors['cyan']}Move this file to Downloads folder? (y/n): {colors['reset']}").strip().lower()
+        if move == "y":
+            move_to_downloads(output_file)
+
     except subprocess.CalledProcessError as e:
         print(f"{styles['bold']}{colors['red']}Error occurred during download: {e}{styles['reset']}")
 
