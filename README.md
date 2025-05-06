@@ -12,7 +12,7 @@ A simple, Termux-friendly Python tool to download YouTube **videos** and **audio
 - Download audio in high-quality MP3 (64k – 320k)
 - Automatically moves downloads to `~/storage/downloads/Yt_downloads/`
 - Clean, colorful command-line interface
-- Works offline once installed
+
 
 ## Requirements
 
