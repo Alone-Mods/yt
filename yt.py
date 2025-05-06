@@ -18,9 +18,9 @@ colors = {
     "reset": "\033[0m"
 }
 
-def sanitize_filename(name):
+def sanitize_filename(name, ext=".mp3"):
     name = name.strip().replace(" ", "_")
-    return name if name.endswith(".mp3") else f"{name}.mp3"
+    return name if name.endswith(ext) else f"{name}{ext}"
 
 def move_to_downloads(file_name):
     downloads_dir = os.path.expanduser("~/storage/downloads")
@@ -44,22 +44,27 @@ def download_video():
     quality = input(f"{colors['cyan']}Enter desired video resolution (default 720p): {colors['reset']}").strip() or "720p"
 
     filename = input(f"{colors['cyan']}Enter output filename (e.g., my_video.mp4): {colors['reset']}").strip()
-    if not filename.endswith(".mp4"):
-        filename += ".mp4"
+    output_file = sanitize_filename(filename, ".mp4")
 
     format_code = f"bestvideo[height<={quality[:-1]}]+bestaudio/best[height<={quality[:-1]}]"
 
     command = [
         "yt-dlp",
         "-f", format_code,
-        "-o", filename,
+        "-o", output_file,
         url
     ]
 
     try:
         print(f"\n{colors['yellow']}Downloading video in {quality} resolution...{colors['reset']}")
         subprocess.run(command, check=True)
-        print(f"\n{colors['green']}Success! Video saved as: {filename}{colors['reset']}")
+        print(f"\n{colors['green']}Success! Video saved as: {output_file}{colors['reset']}")
+
+        # Ask to move to Downloads
+        move = input(f"{colors['cyan']}Move this video to Downloads folder? (y/n): {colors['reset']}").strip().lower()
+        if move == "y":
+            move_to_downloads(output_file)
+
     except subprocess.CalledProcessError as e:
         print(f"\n{colors['red']}Download error: {e}{colors['reset']}")
 
@@ -77,7 +82,7 @@ def download_audio():
         print(f"{colors['red']}Error: You must provide a file name.{colors['reset']}")
         return
 
-    output_file = sanitize_filename(filename)
+    output_file = sanitize_filename(filename, ".mp3")
 
     command = [
         "yt-dlp",
@@ -94,8 +99,7 @@ def download_audio():
         subprocess.run(command, check=True)
         print(f"{styles['bold']}{colors['green']}\nSuccess! Audio saved as: {output_file}{styles['reset']}")
         
-        # Ask user if they want to move it
-        move = input(f"{colors['cyan']}Move this file to Downloads folder? (y/n): {colors['reset']}").strip().lower()
+        move = input(f"{colors['cyan']}Move this audio to Downloads folder? (y/n): {colors['reset']}").strip().lower()
         if move == "y":
             move_to_downloads(output_file)
 
