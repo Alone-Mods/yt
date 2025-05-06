@@ -23,6 +23,6 @@ pkg update && pkg upgrade
 pkg install python git ffmpeg
 pip install yt-dlp
 git clone https://github.com/Alone-Mods/yt
-cd youtube-media-tool
+cd yt
 chmod +x setup.sh
 bash setup.sh
