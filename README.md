@@ -20,9 +20,19 @@ A simple Termux-compatible Python tool to download YouTube **videos** and **audi
 
 ```bash
 pkg update && pkg upgrade
+
+
 pkg install python git ffmpeg
+
 pip install yt-dlp
+
 git clone https://github.com/Alone-Mods/yt
+
+
 cd yt
+
 chmod +x setup.sh
+
 bash setup.sh
+
+python yt.py
