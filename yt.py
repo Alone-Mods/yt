@@ -1,3 +1,4 @@
+
 import subprocess
 import os
 import shutil
@@ -24,10 +25,15 @@ def sanitize_filename(name, ext=".mp3"):
     return name if name.endswith(ext) else f"{name}{ext}"
 
 def move_to_downloads(file_name):
-    downloads_dir = os.path.expanduser("~/storage/downloads")
-    if not os.path.exists(downloads_dir):
-        print(f"{colors['yellow']}Requesting storage permission...{colors['reset']}")
-        os.system("termux-setup-storage")
+    # Detect if running in Termux
+    is_termux = 'com.termux' in os.environ.get('PREFIX', '')
+    if is_termux:
+        downloads_dir = os.path.expanduser("~/storage/downloads")
+        if not os.path.exists(downloads_dir):
+            print(f"{colors['yellow']}Requesting storage permission...{colors['reset']}")
+            os.system("termux-setup-storage")
+    else:
+        downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
     try:
         shutil.move(file_name, os.path.join(downloads_dir, file_name))
         print(f"{colors['green']}Moved to Downloads: {downloads_dir}/{file_name}{colors['reset']}")
@@ -57,7 +63,6 @@ def download_video():
         print(f"\n{colors['yellow']}Downloading video in {quality} resolution...{colors['reset']}")
         subprocess.run(command, check=True)
 
-        # Find most recent video file
         downloaded_files = sorted(
             glob.glob("*.webm") + glob.glob("*.mp4") + glob.glob("*.mkv"),
             key=os.path.getmtime,
