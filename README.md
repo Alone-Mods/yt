@@ -22,6 +22,6 @@ A simple Termux-compatible Python tool to download YouTube **videos** and **audi
 pkg update && pkg upgrade
 pkg install python git ffmpeg
 pip install yt-dlp
-git clone https://github.com/yourusername/youtube-media-tool.git
+git clone https://github.com/Alone-Mods/yt
 cd youtube-media-tool
 python yt_tool.py
