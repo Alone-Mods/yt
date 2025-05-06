@@ -1,6 +1,7 @@
 import subprocess
 import os
 import shutil
+import glob
 
 # ANSI styles for color and bold text
 styles = {
@@ -27,7 +28,6 @@ def move_to_downloads(file_name):
     if not os.path.exists(downloads_dir):
         print(f"{colors['yellow']}Requesting storage permission...{colors['reset']}")
         os.system("termux-setup-storage")
-
     try:
         shutil.move(file_name, os.path.join(downloads_dir, file_name))
         print(f"{colors['green']}Moved to Downloads: {downloads_dir}/{file_name}{colors['reset']}")
@@ -40,30 +40,37 @@ def download_video():
         print(f"{colors['red']}Error: URL is required.{colors['reset']}")
         return
 
-    print(f"\n{colors['green']}Available quality options (example): 360p, 480p, 720p, 1080p{colors['reset']}")
-    quality = input(f"{colors['cyan']}Enter desired video resolution (default 720p): {colors['reset']}").strip() or "720p"
-
-    filename = input(f"{colors['cyan']}Enter output filename (e.g., my_video.mp4): {colors['reset']}").strip()
-    output_file = sanitize_filename(filename, ".mp4")
+    print(f"\n{colors['green']}Available quality options: 360p, 480p, 720p, 1080p{colors['reset']}")
+    quality = input(f"{colors['cyan']}Enter desired resolution (default 720p): {colors['reset']}").strip() or "720p"
 
     format_code = f"bestvideo[height<={quality[:-1]}]+bestaudio/best[height<={quality[:-1]}]"
+    output_template = "%(title)s.%(ext)s"
 
     command = [
         "yt-dlp",
         "-f", format_code,
-        "-o", output_file,
+        "-o", output_template,
         url
     ]
 
     try:
         print(f"\n{colors['yellow']}Downloading video in {quality} resolution...{colors['reset']}")
         subprocess.run(command, check=True)
-        print(f"\n{colors['green']}Success! Video saved as: {output_file}{colors['reset']}")
 
-        # Ask to move to Downloads
-        move = input(f"{colors['cyan']}Move this video to Downloads folder? (y/n): {colors['reset']}").strip().lower()
-        if move == "y":
-            move_to_downloads(output_file)
+        # Find most recent video file
+        downloaded_files = sorted(
+            glob.glob("*.webm") + glob.glob("*.mp4") + glob.glob("*.mkv"),
+            key=os.path.getmtime,
+            reverse=True
+        )
+        if downloaded_files:
+            output_file = downloaded_files[0]
+            print(f"{colors['green']}Success! Video saved as: {output_file}{colors['reset']}")
+            move = input(f"{colors['cyan']}Move this video to Downloads folder? (y/n): {colors['reset']}").strip().lower()
+            if move == "y":
+                move_to_downloads(output_file)
+        else:
+            print(f"{colors['red']}Error: Could not detect downloaded file.{colors['reset']}")
 
     except subprocess.CalledProcessError as e:
         print(f"\n{colors['red']}Download error: {e}{colors['reset']}")
@@ -98,7 +105,7 @@ def download_audio():
         print(f"{styles['bold']}{colors['yellow']}\nDownloading and converting to MP3...{styles['reset']}")
         subprocess.run(command, check=True)
         print(f"{styles['bold']}{colors['green']}\nSuccess! Audio saved as: {output_file}{styles['reset']}")
-        
+
         move = input(f"{colors['cyan']}Move this audio to Downloads folder? (y/n): {colors['reset']}").strip().lower()
         if move == "y":
             move_to_downloads(output_file)
