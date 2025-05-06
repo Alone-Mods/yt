@@ -1,8 +1,6 @@
 
 import subprocess
 import os
-import shutil
-import glob
 
 # ANSI styles for color and bold text
 styles = {
@@ -20,9 +18,9 @@ colors = {
     "reset": "\033[0m"
 }
 
-def sanitize_filename(name, ext=".mp3"):
+def sanitize_filename(name, extension):
     name = name.strip().replace(" ", "_")
-    return name if name.endswith(ext) else f"{name}{ext}"
+    return name if name.endswith(f".{extension}") else f"{name}.{extension}"
 
 def move_to_downloads(file_name):
     # Detect if running in Termux
@@ -34,11 +32,17 @@ def move_to_downloads(file_name):
             os.system("termux-setup-storage")
     else:
         downloads_dir = os.path.join(os.path.expanduser("~"), "Downloads")
+
+    if not os.path.exists(downloads_dir):
+        print(f"{colors['red']}Error: Downloads directory not found.{colors['reset']}")
+        return
+
     try:
-        shutil.move(file_name, os.path.join(downloads_dir, file_name))
-        print(f"{colors['green']}Moved to Downloads: {downloads_dir}/{file_name}{colors['reset']}")
+        new_path = os.path.join(downloads_dir, os.path.basename(file_name))
+        os.rename(file_name, new_path)
+        print(f"{colors['green']}Moved to Downloads: {new_path}{colors['reset']}")
     except Exception as e:
-        print(f"{colors['red']}Error moving file: {e}{colors['reset']}")
+        print(f"{colors['red']}Failed to move file: {e}{colors['reset']}")
 
 def download_video():
     url = input(f"{colors['cyan']}Enter YouTube video URL: {colors['reset']}").strip()
@@ -46,37 +50,29 @@ def download_video():
         print(f"{colors['red']}Error: URL is required.{colors['reset']}")
         return
 
-    print(f"\n{colors['green']}Available quality options: 360p, 480p, 720p, 1080p{colors['reset']}")
-    quality = input(f"{colors['cyan']}Enter desired resolution (default 720p): {colors['reset']}").strip() or "720p"
+    print(f"\n{colors['green']}Available quality options (example): 360p, 480p, 720p, 1080p{colors['reset']}")
+    quality = input(f"{colors['cyan']}Enter desired video resolution (default 720p): {colors['reset']}").strip() or "720p"
 
-    format_code = f"bestvideo[height<={quality[:-1]}]+bestaudio/best[height<={quality[:-1]}]"
-    output_template = "%(title)s.%(ext)s"
+    filename = input(f"{colors['cyan']}Enter output filename (e.g., my_video.mp4): {colors['reset']}").strip()
+    output_file = sanitize_filename(filename, "mp4")
+
+    format_code = f"bestvideo[height<={quality[:-1]}]+bestaudio/best"
 
     command = [
         "yt-dlp",
         "-f", format_code,
-        "-o", output_template,
+        "--merge-output-format", "mp4",
+        "-o", output_file,
         url
     ]
 
     try:
         print(f"\n{colors['yellow']}Downloading video in {quality} resolution...{colors['reset']}")
         subprocess.run(command, check=True)
-
-        downloaded_files = sorted(
-            glob.glob("*.webm") + glob.glob("*.mp4") + glob.glob("*.mkv"),
-            key=os.path.getmtime,
-            reverse=True
-        )
-        if downloaded_files:
-            output_file = downloaded_files[0]
-            print(f"{colors['green']}Success! Video saved as: {output_file}{colors['reset']}")
-            move = input(f"{colors['cyan']}Move this video to Downloads folder? (y/n): {colors['reset']}").strip().lower()
-            if move == "y":
-                move_to_downloads(output_file)
-        else:
-            print(f"{colors['red']}Error: Could not detect downloaded file.{colors['reset']}")
-
+        print(f"\n{colors['green']}Success! Video saved as: {output_file}{colors['reset']}")
+        ask = input(f"{colors['yellow']}Move to Downloads? (y/n): {colors['reset']}").strip().lower()
+        if ask == 'y':
+            move_to_downloads(output_file)
     except subprocess.CalledProcessError as e:
         print(f"\n{colors['red']}Download error: {e}{colors['reset']}")
 
@@ -94,7 +90,7 @@ def download_audio():
         print(f"{colors['red']}Error: You must provide a file name.{colors['reset']}")
         return
 
-    output_file = sanitize_filename(filename, ".mp3")
+    output_file = sanitize_filename(filename, "mp3")
 
     command = [
         "yt-dlp",
@@ -110,11 +106,9 @@ def download_audio():
         print(f"{styles['bold']}{colors['yellow']}\nDownloading and converting to MP3...{styles['reset']}")
         subprocess.run(command, check=True)
         print(f"{styles['bold']}{colors['green']}\nSuccess! Audio saved as: {output_file}{styles['reset']}")
-
-        move = input(f"{colors['cyan']}Move this audio to Downloads folder? (y/n): {colors['reset']}").strip().lower()
-        if move == "y":
+        ask = input(f"{colors['yellow']}Move to Downloads? (y/n): {colors['reset']}").strip().lower()
+        if ask == 'y':
             move_to_downloads(output_file)
-
     except subprocess.CalledProcessError as e:
         print(f"{styles['bold']}{colors['red']}Error occurred during download: {e}{styles['reset']}")
 
