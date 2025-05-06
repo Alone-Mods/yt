@@ -16,6 +16,13 @@ A simple, Termux-friendly Python tool to download YouTube **videos** and **audio
 
 ## Requirements
 
+<p align="left">
+  <a href="https://f-droid.org/en/packages/com.termux/">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/TermuxIcon.png" alt="Download Termux" width="40" style="vertical-align: middle;"/>
+  </a>
+  <a href="https://f-droid.org/en/packages/com.termux/">Termux (Download from F-Droid)</a>
+</p>
+
 - Python (3.x)
 - Git
 - yt-dlp
